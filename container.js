@@ -10,47 +10,25 @@ import { vec3 } from "https://cdn.skypack.dev/gl-matrix?min";
 export function initContainerMesh(gl, minCorner, maxCorner) {
   const [minX, minY, minZ] = minCorner;
   const [maxX, maxY, maxZ] = maxCorner;
-  // 8 corners
+  // Quad in the X/Y plane at Z = minZ
   const positions = new Float32Array([
     minX, minY, minZ,
     maxX, minY, minZ,
     maxX, maxY, minZ,
     minX, maxY, minZ,
-    minX, minY, maxZ,
-    maxX, minY, maxZ,
-    maxX, maxY, maxZ,
-    minX, maxY, maxZ,
   ]);
-  // normals per face (we'll duplicate vertices for simplicity)
-  // reuse face normals after duplication
-  // indices for 12 triangles (2 per face)
+  const texCoords = new Float32Array([
+    0,0, 1,0, 1,1, 0,1
+  ]);
+  const normals = new Float32Array([
+    0,0,1, 0,0,1, 0,0,1, 0,0,1
+  ]);
   const indices = new Uint16Array([
-    // front (minZ)
-    0,1,2, 0,2,3,
-    // back (maxZ)
-    5,4,7, 5,7,6,
-    // left (minX)
-    4,0,3, 4,3,7,
-    // right (maxX)
-    1,5,6, 1,6,2,
-    // bottom (minY)
-    4,5,1, 4,1,0,
-    // top (maxY)
-    3,2,6, 3,6,7
+    0,1,2, 0,2,3
   ]);
-  // compute per-vertex normals (flat shading)
-  // For simplicity, set normals to point outward as position normalized minus center
-  const normals = new Float32Array(8*3);
-  const center = [(minX+maxX)/2, (minY+maxY)/2, (minZ+maxZ)/2];
-  for (let i = 0; i < 8; i++) {
-    const x = positions[i*3]   - center[0];
-    const y = positions[i*3+1] - center[1];
-    const z = positions[i*3+2] - center[2];
-    const len = Math.hypot(x,y,z)||1;
-    normals.set([x/len,y/len,z/len], i*3);
-  }
   const posBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, posBuf); gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
   const normBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, normBuf); gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+  const texBuf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, texBuf); gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
   const idxBuf = gl.createBuffer(); gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, idxBuf); gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-  return { position: posBuf, normal: normBuf, indices: idxBuf, indexCount: indices.length };
+  return { position: posBuf, normal: normBuf, texCoord: texBuf, indices: idxBuf, indexCount: indices.length };
 }

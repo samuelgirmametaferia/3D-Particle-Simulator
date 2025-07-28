@@ -99,4 +99,32 @@ function setNormalAttribute(gl, buffers, programInfo) {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
 }
 
-export { drawScene };
+// Draw a single quad (square) in 3D space
+function drawQuad(gl, programInfo, buffers, projectionMatrix, viewMatrix, modelMatrix) {
+    gl.useProgram(programInfo.program);
+    // Set uniforms
+    gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+    gl.uniformMatrix4fv(programInfo.uniformLocations.viewMatrix, false, viewMatrix);
+    gl.uniformMatrix4fv(programInfo.uniformLocations.modelMatrix, false, modelMatrix);
+    // Set normal matrix
+    const mvMatrix = mat4.create();
+    mat4.multiply(mvMatrix, viewMatrix, modelMatrix);
+    const normalMat = mat3.create();
+    mat3.fromMat4(normalMat, mvMatrix);
+    mat3.invert(normalMat, normalMat);
+    mat3.transpose(normalMat, normalMat);
+    gl.uniformMatrix3fv(programInfo.uniformLocations.normalMatrix, false, normalMat);
+    // Set attributes
+    setPositionAttribute(gl, buffers, programInfo);
+    setNormalAttribute(gl, buffers, programInfo);
+    if (buffers.texCoord && programInfo.attribLocations.vertexTexCoord !== undefined) {
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.texCoord);
+        gl.vertexAttribPointer(programInfo.attribLocations.vertexTexCoord, 2, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(programInfo.attribLocations.vertexTexCoord);
+    }
+    // Bind index buffer and draw
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+    gl.drawElements(gl.TRIANGLES, buffers.indexCount, gl.UNSIGNED_SHORT, 0);
+}
+
+export { drawScene, drawQuad };

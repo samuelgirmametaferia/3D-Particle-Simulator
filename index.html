@@ -1,42 +1,110 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <style>
-      html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
-      canvas { width: 100%; height: 100%; display: block; }
-    </style>
-    <title>3D-Particle-Simulator</title>
-    <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+  </style>
+  <title>3D-Particle-Simulator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"
     integrity="sha512-zhHQR0/H5SEBL3Wn6yYSaTTZej12z0hVZKOv3TwCUXT1z5qeqGcXJLLrbERYRScEDDpYIJhPC1fk31gqR783iQ=="
-    crossorigin="anonymous"
-    defer></script>
+    crossorigin="anonymous" defer></script>
 </head>
+
 <body style="margin:0; overflow:hidden; position:relative;">
-    <canvas id="canvas" width="1215" height="1000"></canvas>
-    <!-- Crosshair overlay -->
-    <div id="crosshair-horizontal" style="position:fixed; top:50%; left:50%; width:20px; height:2px; background:white; transform:translate(-50%, -1px); pointer-events:none; z-index:100;"></div>
-    <div id="crosshair-vertical" style="position:fixed; top:50%; left:50%; width:2px; height:20px; background:white; transform:translate(-1px, -50%); pointer-events:none; z-index:100;"></div>
-    <!-- UI controls -->
-    <div id="uiPanel" style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); padding:10px; color:white; font-family:sans-serif; z-index:100;">
-      <div>
-        <label>Gravity: <input type="range" id="gravitySlider" min="0" max="20" step="0.1" value="9.8"></label>
-        <span id="gravityValue">9.8</span>
-      </div>
-      <div>
-        <label>Container Scale: <input type="range" id="scaleSlider" min="1" max="2" step="0.1" value="1.2"></label>
-        <span id="scaleValue">1.2</span>
-      </div>
-      <div>
-        <label>Far Clip: <input type="range" id="farSlider" min="10" max="500" step="1" value="100"></label>
-        <span id="farValue">100</span>
-      </div>
-      <div>
-        <label>Particles: <input type="range" id="particleCountSlider" min="100" max="5000" step="100" value="1000"></label>
-        <span id="particleCountValue">1000</span>
-      </div>
+  <canvas id="canvas" width="1215" height="1000"></canvas>
+  <!-- Crosshair overlay -->
+  <div id="crosshair-horizontal"
+    style="position:fixed; top:50%; left:50%; width:20px; height:2px; background:white; transform:translate(-50%, -1px); pointer-events:none; z-index:100;">
+  </div>
+  <div id="crosshair-vertical"
+    style="position:fixed; top:50%; left:50%; width:2px; height:20px; background:white; transform:translate(-1px, -50%); pointer-events:none; z-index:100;">
+  </div>
+  <!-- UI controls -->
+  <div id="uiPanel"
+    style="position:absolute; top:10px; right:10px; background:rgba(0,0,0,0.5); padding:10px; color:white; font-family:sans-serif; z-index:100;">
+    <div>
+      <label>Far Clip: <input type="range" id="farSlider" min="10" max="500" step="1" value="100" autocomplete="off"></label>
+      <span id="farValue">100</span>
     </div>
-    <div id="fpsCounter" style="position:absolute; top:10px; right:10px; color:white; font-family:monospace; z-index:100;">FPS: 0</div>
-    <script src="app.js" type="module"></script>
+    <div>
+      <label>Particles: <input type="range" id="particleCountSlider" min="100" max="5000" step="100"
+          value="1000" autocomplete="off"></label>
+      <span id="particleCountValue">1000</span>
+    </div>
+    <div>
+      <label>Particle Size: <input id="particleSizeSlider" type="range" min="0.2" max="3" step="0.01" value="1" autocomplete="off"></label>
+      <span id="particleSizeValue">1.00</span>
+    </div>
+    <div>
+      <label>Container Scale: <input type="range" id="scaleSlider" min="1" max="2" step="0.1" value="1.2" autocomplete="off"></label>
+      <span id="scaleValue">1.2</span>
+    </div>
+    <div>
+      <label>Gravity: <input type="range" id="gravitySlider" min="0" max="20" step="0.1" value="9.8" autocomplete="off"></label>
+      <span id="gravityValue">9.8</span>
+    </div>
+    <div>
+      <label for="colorModeSelect">Color Mode:</label>
+      <select id="colorModeSelect" autocomplete="off">
+        <option value="solid">Solid Color</option>
+        <option value="velocity">Color by Velocity</option>
+      </select>
+    </div>
+
+    <div id="sphereColorContainer">
+      <label>Sphere Color: <input type="color" id="sphereColorPicker" value="#ffffff"></label>
+    </div>
+
+    <div>
+      <label><input type="checkbox" id="morphCheckbox" value="false" autocomplete="off"> Dynamic Particle Effect</label>
+    </div>
+    <button id="resetButton" style="margin-top:10px;">Reset</button>
+
+  </div>
+  <div id="fpsCounter" style="position:absolute; top:10px; left:10px; color:white; font-family:monospace; z-index:100;">
+    FPS: 0</div>
+  <script>
+    window.onload = () => {
+      // Reset sliders and UI elements to default values
+      document.getElementById("farSlider").value = 100;
+      document.getElementById("farValue").textContent = 100;
+
+      document.getElementById("particleCountSlider").value = 1000;
+      document.getElementById("particleCountValue").textContent = 1000;
+
+      document.getElementById("particleSizeSlider").value = 1;
+      document.getElementById("particleSizeValue").textContent = "1.00";
+
+      document.getElementById("scaleSlider").value = 1.2;
+      document.getElementById("scaleValue").textContent = 1.2;
+
+      document.getElementById("gravitySlider").value = 9.8;
+      document.getElementById("gravityValue").textContent = 9.8;
+
+      document.getElementById("sphereColorPicker").value = "#ffffff";
+
+      document.getElementById("morphCheckbox").checked = false;
+    };
+    let resetButton = document.getElementById("resetButton");
+    resetButton.addEventListener("click", evt => {
+      window.location.href = "./"
+    });
+  </script>
+  <script src="app.js" type="module"></script>
+
 </body>
+
 </html>
